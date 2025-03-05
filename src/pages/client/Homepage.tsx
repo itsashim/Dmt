@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   Activities,
   ClientContainer,
@@ -7,12 +8,24 @@ import {
   PlaceCard,
   Section,
 } from "../../components";
-import { useAppSelector } from "../../hooks/useTypedSelectors";
+import { useAppSelector, useAppDispatch } from "../../hooks/useTypedSelectors";
 import { RootAppState } from "../../redux/store";
+import { getAllEvents } from "../../redux/actions/events";
+import { getPlaces } from "../../redux/actions/places";
 
 const Homepage = () => {
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    dispatch(getAllEvents());
+    dispatch(getPlaces());
+  }, [dispatch]);
+
   const { places } = useAppSelector((state: RootAppState) => state.places);
   const { events } = useAppSelector((state: RootAppState) => state.events);
+
+  console.log("Events:", events);
+  console.log(events.length);
 
   return (
     <>
