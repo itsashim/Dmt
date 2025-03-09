@@ -18,7 +18,7 @@ export const getPlaces = () => async (dispatch: AppDispatch) => {
   try {
     const { data } = await api.get("/places");
 
-    console.log(data);
+    console.log("kik", data);
 
     dispatch(storePlaces(data));
   } catch (err: any) {
@@ -40,34 +40,65 @@ export const getSellerPlaces =
     }
   };
 
-export const createPlace = (body: any) => async (dispatch: AppDispatch) => {
-  try {
-    dispatch(switchLoading());
+export const createPlace =
+  (formData: FormData) => async (dispatch: AppDispatch) => {
+    try {
+      dispatch(switchLoading());
 
-    const {
-      data: { data, success },
-    } = await api.post("/places", body, {
-      headers: multipartHeader,
-    });
+      // Log the request for debugging
+      console.log(
+        "Sending FormData with images:",
+        formData.getAll("photos").length,
+        "photos"
+      );
 
-    dispatch(switchLoading());
-    dispatch(addPlaceToStore(data));
-    dispatch(storeNewPlaceDetails(placeInitState));
-    message.success("Successfully created!");
+      const response = await api.post("/places", formData, {
+        headers: {
+          ...multipartHeader,
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
-    return success;
-  } catch (err: any) {
-    dispatch(switchLoading());
-    console.log(err.response.data?.message);
+      console.log("Response:", response);
 
-    message.error(
-      err.response.data?.message ===
-        "Forbidden! Provided Role : BUYER. Allowed Roles : SELLER."
-        ? `Switch to SELLER`
-        : err.response.data?.message
-    );
-  }
-};
+      const { data, success } = response.data;
+
+      dispatch(switchLoading());
+      dispatch(addPlaceToStore(data));
+      dispatch(storeNewPlaceDetails(placeInitState));
+      message.success("Successfully created!");
+
+      return success;
+    } catch (err: any) {
+      dispatch(switchLoading());
+
+      console.error("Error details:", err);
+
+      // More detailed error logging
+      if (err.response) {
+        console.error("Status:", err.response.status);
+        console.error("Headers:", err.response.headers);
+        try {
+          console.error("Data:", JSON.stringify(err.response.data));
+        } catch (e) {
+          console.error("Data (non-JSON):", err.response.data);
+        }
+      } else if (err.request) {
+        console.error("Request made but no response received");
+      } else {
+        console.error("Error message:", err.message);
+      }
+
+      message.error(
+        err.response?.data?.message ===
+          "Forbidden! Provided Role : BUYER. Allowed Roles : SELLER."
+          ? `Switch to SELLER`
+          : err.response?.data?.message || "An error occurred"
+      );
+
+      return false;
+    }
+  };
 
 export const updateStay = (body: any, stayId: string) => async () => {
   try {

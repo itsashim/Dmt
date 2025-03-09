@@ -16,11 +16,16 @@ export const createEvent = (body: any) => async (dispatch: AppDispatch) => {
   try {
     dispatch(switchLoading());
 
+    console.log("Request Payload:", body); // Log the request payload
+
     const {
       data: { success, data },
     } = await api.post("/events", body, {
       headers: multipartHeader,
     });
+
+    console.log("Response Data:", data); // Log the response data
+
     dispatch(switchLoading());
 
     dispatch(addEventToStore(data));
@@ -29,6 +34,7 @@ export const createEvent = (body: any) => async (dispatch: AppDispatch) => {
     return success;
   } catch (err: any) {
     dispatch(switchLoading());
+    console.error("Error:", err); // Log the error
     message.error(err.response.data?.message);
   }
 };
@@ -52,13 +58,18 @@ export const getEventsById =
 
 export const getAllEvents = () => async (dispatch: AppDispatch) => {
   try {
-    const {
-      data: { data },
-    } = await api.get("/events");
 
-    dispatch(storeEvents(data));
+    const response = await api.get("/events");
+
+    console.log("Full API Response:", response);
+    console.log("Data Received:", response.data);
+
+    dispatch(storeEvents(response.data.data));
   } catch (err: any) {
-    message.error(err.response.data?.message);
+    console.error("API Call Error:", err);
+    console.error("Error Response Data:", err.response?.data);
+    console.error("Error Message:", err.message);
+    message.error(err.response?.data?.message || "Failed to fetch events");
   }
 };
 

@@ -17,32 +17,45 @@ import { getUser } from "./user";
 import { message } from "antd";
 import api from "../../api";
 
+interface LoginResponse {
+  data: {
+    token: string;
+    user: {
+      id: number;
+      [key: string]: any;
+    };
+  };
+  status: string;
+}
+
 export const login =
   (email: string, password: string) => async (dispatch: AppDispatch) => {
     const body = { email, password };
     try {
       dispatch(switchLoading());
-      const res = await api.post("/auth/sign-in", body);
+      const res = await api.post<LoginResponse>("/auth/sign-in", body);
 
-      if (!res || !res.data) throw new Error("Invalid response from server");
+      // Safe access of nested data properties
+      if (!res?.data?.data?.token || !res?.data?.data?.user) {
+        throw new Error("Invalid response format from server");
+      }
 
       const { token, user } = res.data.data;
 
       localStorage.setItem("token", token);
-      localStorage.setItem("user_id", user.id);
+      localStorage.setItem("user_id", user.id.toString());
 
       dispatch(loginSuccess({ user, isAuthenticated: true, token }));
-      await dispatch(getUser(+user.id));
+      await dispatch(getUser(user.id));
     } catch (err: any) {
-      console.error("Login Error:", err); // Logs error details
-      message.error(
-        err?.response?.data?.error || "Login failed. Please try again."
-      );
+      console.error("Login Error:", err);
+      const errorMessage =
+        err?.response?.data?.error || "Login failed. Please try again.";
+      message.error(errorMessage);
     } finally {
       dispatch(switchLoading());
     }
   };
-
 // // export const renewToken = () => async (dispatch: AppDispatch) => {
 // //   try {
 // //     const res: any = await api.get('/auth/renewtoken');
@@ -104,16 +117,21 @@ export const getAllUser = () => async () => {
 export const signup = (body: any) => async (dispatch: AppDispatch) => {
   try {
     dispatch(switchLoading());
-    await api.post("/auth/sign-up-email", body);
+    const res = await api.post("/auth/sign-up-email", body);
+
+    if (!res?.data) {
+      throw new Error("Invalid response from server");
+    }
 
     message.success(
-      "Registration successfull! Please check your email for confirmation."
+      "Registration successful! Please check your email for confirmation."
     );
-
-    dispatch(switchLoading());
   } catch (err: any) {
+    const errorMessage =
+      err?.response?.data?.error || "Registration failed. Please try again.";
+    message.error(errorMessage);
+  } finally {
     dispatch(switchLoading());
-    message.error(err.response.data.error);
   }
 };
 
@@ -225,9 +243,10 @@ export const logout = () => async (dispatch: AppDispatch) => {
     dispatch(signOut());
     localStorage.removeItem("token");
     localStorage.removeItem("user_id");
-
-    message.success("Successfully Logged out!");
+    message.success("Successfully logged out!");
   } catch (err: any) {
-    message.error(err?.response?.data?.error);
+    const errorMessage =
+      err?.response?.data?.error || "Logout failed. Please try again.";
+    message.error(errorMessage);
   }
 };

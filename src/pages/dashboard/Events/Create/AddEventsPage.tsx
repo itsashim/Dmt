@@ -326,6 +326,7 @@ const AddEventsPage = () => {
 
   const onAddEvent = async () => {
     const {
+      id,
       photos,
       onlineEvent,
       onsiteEvent,
@@ -397,6 +398,8 @@ const AddEventsPage = () => {
       ...data,
       ...businessNatureData,
     });
+
+    console.log("Event Details:", addEventsDetails); // Add this line to log the event details
 
     if (!isValid.length) {
       const success = await dispatch(createEvent(formData));

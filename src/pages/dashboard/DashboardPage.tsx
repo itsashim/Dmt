@@ -22,7 +22,7 @@ import {
   initRoomState,
   placeInitState,
 } from "../../lib/constants/stays";
-import { roomTypes } from "../../lib/constants/dashboard";
+import { roomTypes, currencies } from "../../lib/constants/dashboard";
 import { AddPlaceModel, RoomModel } from "../../types/places";
 
 const { TextArea } = Input;
@@ -116,7 +116,7 @@ const CustomDropdown: FC<{
     <Dropdown
       trigger={["click"]}
       menu={{
-        items: roomTypes,
+        items: currencies,
         onClick,
       }}
       className={`cursor-pointer`}

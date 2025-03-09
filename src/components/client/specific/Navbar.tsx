@@ -32,7 +32,7 @@ const SwitchRole = () => {
       title={`Switch to ${role === "BUYER" ? "Seller" : "Buyer"}`}
       onClick={async () => {
         await dispatch(updateUserRole());
-        message.success(`User role switched successful.`);
+        message.success(`User role switched successfully.`);
       }}
     />
   );
@@ -56,53 +56,68 @@ const Logout = () => {
   );
 };
 
-const items: MenuProps["items"] = [
-  {
-    key: "1",
-    label: <SwitchRole />,
-  },
-  {
-    type: "divider",
-  },
-  {
-    key: "4",
-    label: <Logout />,
-  },
-];
+const UserMenu = ({ userName, role }: { userName: string; role: string }) => {
+  const items: MenuProps["items"] = [
+    ...(role === "SELLER"
+      ? [
+          {
+            key: "0",
+            label: <NavLink to="/app/dashboard">Dashboard</NavLink>,
+          },
+        ]
+      : []),
+    {
+      type: "divider",
+    },
+    {
+      key: "1",
+      label: <SwitchRole />,
+    },
+    {
+      type: "divider",
+    },
+    {
+      key: "4",
+      label: <Logout />,
+    },
+  ];
+
+  return (
+    <Dropdown menu={{ items }} placement="bottom" trigger={["click"]}>
+      <button type="button" className={`flex gap-2 items-center rounded-md `}>
+        <FaCircleUser className={`text-xl text-primary`} />
+        <span className={`capitalize text-black font-semibold`}>
+          {userName}
+        </span>
+        <MdKeyboardArrowDown className={`text-xl text-primary`} />
+      </button>
+    </Dropdown>
+  );
+};
 
 const linkStyle =
   `flex justify-start lg:justify-center items-center gap-4 lg:gap-2 lg:rounded-none lg:p-0 lg:bg-transparent w-full lg:w-auto` as string;
 
-const UserMenu = () => (
-  <Dropdown menu={{ items }} placement="bottom" trigger={["click"]}>
-    <button type="button" className={`flex gap-2 items-center rounded-md `}>
-      <FaCircleUser className={`text-xl text-primary`} />
-      <span
-        className={`capitalize text-black font-semibold`}
-      >{`Diwash T.`}</span>
-      <MdKeyboardArrowDown className={`text-xl text-primary`} />
-    </button>
-  </Dropdown>
-);
-
 const NavLinks = ({
   role,
   isAuthenticated,
+  userName,
 }: {
   role: "ADMIN" | "BUYER" | "SELLER";
   isAuthenticated: boolean;
+  userName: string;
 }) => (
   <div
     className={`flex flex-col lg:flex-row items-center justify-between gap-4 lg:gap-16 ${role}`}
   >
-    {/* {role === "BUYER" && (
+    {role === "BUYER" && (
       <NavLink to={`/trip-board`} type="button" className={linkStyle}>
         <img src={Svg.heart} />
         <span className={`text-black text-base font-semibold`}>
           Trip Boards
         </span>
       </NavLink>
-    )} */}
+    )}
 
     {!isAuthenticated && (
       <div
@@ -121,15 +136,14 @@ const NavLinks = ({
 
     {isAuthenticated && (
       <div className={`hidden lg:block`}>
-        <UserMenu />
+        <UserMenu userName={userName} role={role ?? "GUEST"} />
       </div>
     )}
 
     {!isAuthenticated && (
       <NavLink
         to={`/auth/login`}
-        // to={`/app/dashboard`}
-        className="flex items-center rounded-md bg-white ring-1 ring-primary text-primary hover:ring-white hover:bg-primary hover:opacity-70 hover:ease-in-out hover:duration-150 hover:text-white px-3 py-2 text-sm font-semibold  shadow-sm "
+        className="flex items-center rounded-md bg-white ring-1 ring-primary text-primary hover:ring-white hover:bg-primary hover:opacity-70 hover:ease-in-out hover:duration-150 hover:text-white px-3 py-2 text-sm font-semibold shadow-sm"
       >
         Get Started
       </NavLink>
@@ -139,34 +153,35 @@ const NavLinks = ({
 
 const Navbar: FC = () => {
   const {
-    user: { role },
+    user: { role, firstName, lastName },
     isAuthenticated,
   } = useSelector((state: RootAppState) => state.auth);
 
   const [open, setOpen] = useState(false);
   const toggleDrawer = () => setOpen(!open);
+  const userName = `${firstName ?? ""} ${lastName ?? ""}`.trim() || "Guest";
 
   return (
     <nav
       className={`fixed top-0 left-0 right-0 bottom-0 z-[999] bg-white flex justify-between items-center shadow-md px-4 md:px-8 h-20 border border-b-fade-white`}
     >
-      <NavLink
-        to={role === "BUYER" ? `/` : role === "SELLER" ? `/app/dashboard` : `/`}
-        type="button"
-        className={linkStyle}
-      >
+      <NavLink to={`/`} type="button" className={linkStyle}>
         <img src={Logo.logo_purple} className={`w-20 md:w-24`} />
       </NavLink>
 
       {role && (
         <div className={`hidden lg:block`}>
-          <NavLinks role={role} isAuthenticated={isAuthenticated} />
+          <NavLinks
+            role={role}
+            isAuthenticated={isAuthenticated}
+            userName={userName}
+          />
         </div>
       )}
       <div className={`flex gap-4 justify-center items-center lg:hidden`}>
         {isAuthenticated && (
           <div className={`block lg:hidden`}>
-            <UserMenu />
+            <UserMenu userName={userName} role={role ?? "GUEST"} />
           </div>
         )}
         <button type="button" onClick={toggleDrawer}>
@@ -182,7 +197,13 @@ const Navbar: FC = () => {
         onClick={toggleDrawer}
         closeIcon={<IoClose className={`text-black text-4xl`} />}
       >
-        {role && <NavLinks role={role} isAuthenticated={isAuthenticated} />}
+        {role && (
+          <NavLinks
+            role={role}
+            isAuthenticated={isAuthenticated}
+            userName={userName}
+          />
+        )}
       </Drawer>
     </nav>
   );
